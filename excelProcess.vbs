@@ -3,7 +3,7 @@ dim srcStr, resStr, line
 Set oExcel= CreateObject("Excel.Application") 
 Set oWb = oExcel.Workbooks.Open("G:\1-ZigaaCode\script\mytest.xlsx")
 Set oSheet = oWb.Sheets("Sheet1") 
-rem MsgBox oSheet.Range("C2").Value   rem æ˜¾ç¤ºç‰¹å®šå•å…ƒæ ¼çš„å†…å®¹
+rem MsgBox oSheet.Range("C2").Value   rem ÏÔÊ¾ÌØ¶¨µ¥Ôª¸ñµÄÄÚÈİ
 rem MsgBox oSheet.Cells(4,2).Value
 line=InputBox("Enter the line:")
 Call replaceStr(oSheet, "L1", "FAI20", line)
@@ -19,8 +19,8 @@ Call replaceStr(oSheet, "T3", "FAI10_3", line)
 Call replaceStr(oSheet, "T4", "FAI10_4", line)
 rem oSheet.Range("C2").Value = "1_FAI19_avg"
 rem oExcel = Replace(oExcel, "1_L1_avg", "1_FAI19_avg")
-oExcel.Visible = True rem æ˜¾ç¤ºå½“å‰çª—å£
-rem oExcel.Caption = "åº”ç”¨ç¨‹åºè°ƒç”¨ Microsoft Excel" rem æ›´æ”¹è¡¨æ ¼æ ‡é¢˜æ 
+oExcel.Visible = True rem ÏÔÊ¾µ±Ç°´°¿Ú
+rem oExcel.Caption = "Ó¦ÓÃ³ÌĞòµ÷ÓÃ Microsoft Excel" rem ¸ü¸Ä±í¸ñ±êÌâÀ¸
 rem oSheet.columns(3).Replace  src res
 rem Cells.Replace What:="1_L1_avg", Replacement:="1_FAI19_avg", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
 oWb.Save
@@ -47,7 +47,7 @@ End Sub
 
 
 
-rem ç”¨äºexcelä¸­çš„VBAå®
+rem ÓÃÓÚexcelÖĞµÄVBAºê
 'Sub Find_Replace(oSheet)
 '    src = InputBox("Enter the src replace string:")
 '    res = InputBox("Enter the res replace string:")
