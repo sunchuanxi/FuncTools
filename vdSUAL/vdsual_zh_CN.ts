@@ -16,6 +16,18 @@
         <translation>缺陷类型：</translation>
     </message>
     <message>
+        <source>diaojiao</source>
+        <translation>掉角</translation>
+    </message>
+    <message>
+        <source>huahen</source>
+        <translation>划痕</translation>
+    </message>
+    <message>
+        <source>zangwu</source>
+        <translation>脏污</translation>
+    </message>
+    <message>
         <source>Area/Contrast</source>
         <translation>面积/对比度</translation>
     </message>
