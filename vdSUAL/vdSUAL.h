@@ -3,8 +3,10 @@
 #include <QPixmap>
 #include <cpp/HalconCpp.h>
 #include <QtSql/QtSql>
+#include "vdSUAL_p.h"
 #include "../include/qmvtoolplugin.h"
 ///////////////////////////////////////////////////////////////////////////////
+#define COLOR_CLASSIFICATION_MAX_MODEL_NUM 3
 
 struct QDictItem {
 	QString name = "";
@@ -20,6 +22,8 @@ struct InspectResult {
 	//qint32  moutput    = -1;
 };
 enum{ sortDefect, sortMeasure };
+
+
 class QvdSUALPrivate;
 class QvdSUAL : public QObject {
     Q_OBJECT

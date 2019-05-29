@@ -3,12 +3,37 @@
 #include <QPixmap>
 #include <cpp/HalconCpp.h>
 #include "../include/qmvtoolplugin.h"
+#include "SuaKITRuntime.h"
+#include "stdio.h"
+#include <fstream>   
+#include <string>  
+#include <iostream>  
+#include <streambuf> 
+using namespace std;
+struct csInfo
+{
+	string name;
+	string isOK = "OK";
+	int index = 0;
+	int defectKind = 0;
+	int x = 0;
+	int y = 0;
+	int width = 0;
+	int height = 0;
+	double value = 0;
+	double zangwu = 0;
+	double huahen = 0;
+	double quejiao = 0;
+};
+
 class QvdSUAL;
 class QvdSUALPrivate {
 public:
     QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdSUAL* parent);
 protected:
     void run(const Halcon::HImage&, const Halcon::HRegion&, const QByteArray&);
+	BOOL SaveStatisticsExcel(string fileName, string type, double quejiao, double huahen, double zangwu, int i, int total, int index);
+	bool UpdateNumberOfDefect(vector<csInfo>  *defectList1);
 private:
     Q_DECLARE_PUBLIC(QvdSUAL)
     QvdSUAL* const q_ptr;

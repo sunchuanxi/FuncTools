@@ -44,7 +44,7 @@
     <name>QvdSUALPlugin</name>
     <message>
         <source>SUAL</source>
-        <translation>数优接口</translation>
+        <translation>数优</translation>
     </message>
     <message>
         <source>Describe</source>
