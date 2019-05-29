@@ -659,8 +659,11 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 			cout << "index: " << (*i).index << endl;*/
 			if ((*i).isOK == "NG"){
 				flagResult = false;
+				resultStatus = QMVToolPlugin::FAIL;
+				Halcon::HRegion resReg;
+				resReg = Halcon::HRegion::GenRectangle1((*i).y, (*i).x, (*i).y + (*i).height, (*i).x + (*i).width);
+				resultRegions.Append(resReg);
 			}
-				
 			
 			if ((*i).defectKind == 0){
 				portFlag1 = true;
@@ -705,7 +708,7 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 		if (!flagResult){
 			imgPath = imgPath + "_NG" + ".bmp";
 			cv::imwrite(imgPath, srcImg);
-			cv::imwrite(imgPath, srcImg);
+			//cv::imwrite(imgPath, srcImg);
 			_paint.setPen(Qt::red);
 			resultStatus = QMVToolPlugin::FAIL;
 			resultStr = QvdSUAL::tr("NG");
