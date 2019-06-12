@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>Defect Type: </source>
-        <translation>缺陷类型：</translation>
+        <translation type="vanished">缺陷类型：</translation>
     </message>
     <message>
         <source>diaojiao</source>
@@ -29,15 +29,15 @@
     </message>
     <message>
         <source>Area/Contrast</source>
-        <translation>面积/对比度</translation>
+        <translation type="vanished">面积/对比度</translation>
     </message>
     <message>
         <source>Length</source>
-        <translation>长度</translation>
+        <translation type="vanished">长度</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation>宽度</translation>
+        <translation type="vanished">宽度</translation>
     </message>
 </context>
 <context>
@@ -148,6 +148,22 @@
     <message>
         <source>isMudge</source>
         <translation>脏污</translation>
+    </message>
+    <message>
+        <source>losingAngle</source>
+        <translation>面积</translation>
+    </message>
+    <message>
+        <source>scratchLength</source>
+        <translation>长度</translation>
+    </message>
+    <message>
+        <source>dirtyArea</source>
+        <translation>面积</translation>
+    </message>
+    <message>
+        <source>dirtyThresh</source>
+        <translation>阈值</translation>
     </message>
 </context>
 </TS>

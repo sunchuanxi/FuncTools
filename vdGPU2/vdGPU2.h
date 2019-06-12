@@ -1,9 +1,9 @@
-#ifndef VDSUAL_H
-#define VDSUAL_H
+#ifndef VDGPU2_H
+#define VDGPU2_H
 #include <QPixmap>
 #include <cpp/HalconCpp.h>
 #include <QtSql/QtSql>
-#include "vdSUAL_p.h"
+#include "vdGPU2_p.h"
 #include "../include/qmvtoolplugin.h"
 ///////////////////////////////////////////////////////////////////////////////
 #define COLOR_CLASSIFICATION_MAX_MODEL_NUM 3
@@ -23,9 +23,8 @@ struct InspectResult {
 };
 enum{ sortDefect, sortMeasure };
 
-
-class QvdSUALPrivate;
-class QvdSUAL : public QObject {
+class QvdGPU2Private;
+class QvdGPU2 : public QObject {
     Q_OBJECT
     Q_PROPERTY(int calibration_type MEMBER m_calibration_type NOTIFY calibration_typeChanged)
 	Q_PROPERTY(int edgePort MEMBER m_edgePort NOTIFY edgePortChanged)
@@ -46,8 +45,8 @@ class QvdSUAL : public QObject {
     Q_PROPERTY(Halcon::HRegionArray resultRegions READ resultRegions CONSTANT)
     Q_PROPERTY(QList<QColor> resultRegionColors READ resultRegionColors CONSTANT)
 public:
-    QvdSUAL(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QObject* parent = Q_NULLPTR);
-    ~QvdSUAL();
+    QvdGPU2(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QObject* parent = Q_NULLPTR);
+	~QvdGPU2();
 signals:
 	void calibration_typeChanged(int calibration_type);
 	void edgePortChanged(int edgePort);
@@ -73,9 +72,9 @@ protected:
     Halcon::HRegionArray resultRegions() const;
     QList<QColor> resultRegionColors() const;
 private:
-    Q_DECLARE_PRIVATE(QvdSUAL)
-    Q_DISABLE_COPY(QvdSUAL)
-    QvdSUALPrivate* const d_ptr;
+	Q_DECLARE_PRIVATE(QvdGPU2)
+	Q_DISABLE_COPY(QvdGPU2)
+	QvdGPU2Private* const d_ptr;
 
 	QMap<QString, QDictItem> m_dictDefect;
 	QMap<QString, InspectResult> initResult;

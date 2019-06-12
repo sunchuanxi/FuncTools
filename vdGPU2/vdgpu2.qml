@@ -7,7 +7,7 @@ import QtQuick.Controls 2.2 as NewControl
 //import com.zigaa.data 1.0
 
 Item {
-    //enabled: accountData.currentGroup === AccountData.Technician || accountData.currentGroup === AccountData.Engineer
+    //enabled: accountData.currentGroup >= AccountData.Technician
 
     implicitWidth: childrenRect.width
     implicitHeight: childrenRect.height+10
@@ -20,6 +20,7 @@ Item {
         edgePort.currentIndex = jobClient.queryValue("edgePort")
         scratchPort.currentIndex = jobClient.queryValue("scratchPort")
         mudgePort.currentIndex = jobClient.queryValue("mudgePort")
+
         dirtyArea.value = jobClient.queryValue("dirtyArea")
         dirtyThresh.value = jobClient.queryValue("dirtyThresh")
         losingAngle.value = jobClient.queryValue("losingAngle")
@@ -106,7 +107,6 @@ Item {
                     CheckBox
                     {
                         id: isEdge
-
                     }
                     Label {
                         Layout.preferredWidth: lblWidth
@@ -125,6 +125,7 @@ Item {
                         }
                     }
                 }
+
                 Label{text: " "}
 
                 RowLayout{
@@ -150,8 +151,8 @@ Item {
                     }
                 }
 
-
                 Label{text: " "}
+
                 RowLayout{
                     CheckBox
                     {
@@ -177,7 +178,6 @@ Item {
 
                 Label{text: " "}
 
-
                 RowLayout{
                     enabled: isScratch.checked
                     Label{
@@ -200,6 +200,7 @@ Item {
                         onValueChanged: if (!firstInit) jobClient.updateValue("scratchLength", value)
                     }
                 }
+
 
                 Label{text: " "}
 
@@ -265,6 +266,7 @@ Item {
                         onValueChanged: if (!firstInit) jobClient.updateValue("dirtyThresh", value)
                     }
                 }
+
             }
 
         }

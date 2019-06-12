@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/plugins/mvtools/defect_detection">
+        <file>vdgpu2_zh_CN.qm</file>
+        <file>vdgpu2_zh_CN.ts</file>
+    </qresource>
+</RCC>

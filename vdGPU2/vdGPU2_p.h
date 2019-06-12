@@ -1,5 +1,5 @@
-#ifndef VDSUALPRIVATE_H
-#define VDSUALPRIVATE_H
+#ifndef VDGPU2PRIVATE_H
+#define VDGPU2PRIVATE_H
 #include <QPixmap>
 #include <cpp/HalconCpp.h>
 #include "../include/qmvtoolplugin.h"
@@ -28,18 +28,18 @@ struct csInfo
 	double quejiao = 0;
 };
 
-class QvdSUAL;
-class QvdSUALPrivate {
+class QvdGPU2;
+class QvdGPU2Private {
 public:
-    QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdSUAL* parent);
+	QvdGPU2Private(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdGPU2* parent);
 protected:
     void run(const Halcon::HImage&, const Halcon::HRegion&, const QByteArray&);
 	BOOL SaveStatisticsExcel(string fileName, string type, double quejiao, double huahen, double zangwu, int i, int total, int index);
 	bool UpdateNumberOfDefect(vector<csInfo>  *defectList1);
 	void ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName);
 private:
-    Q_DECLARE_PUBLIC(QvdSUAL)
-    QvdSUAL* const q_ptr;
+	Q_DECLARE_PUBLIC(QvdGPU2)
+	QvdGPU2* const q_ptr;
     const quint8 station;
     const quint8 camera;
     const quint8 threadID;

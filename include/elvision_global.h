@@ -1,0 +1,12 @@
+#ifndef ELVISION_GLOBAL_H
+#define ELVISION_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(ELVISION_LIBRARY)
+#  define ELVISIONSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define ELVISIONSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // ELVISION_GLOBAL_H

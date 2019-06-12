@@ -1,19 +1,20 @@
 #include <QtGui>
-#include "vdSUAL.h"
-#include "vdSUAL_p.h" 
+#include "vdGPU2.h"
+#include "vdGPU2_p.h" 
 #include "opencv2\opencv.hpp"
+#include "SuaKITRuntime.h"
 using namespace std;
 SuaKIT::API::SegmentationEvaluator* citieSegmentationEvaluator[COLOR_CLASSIFICATION_MAX_MODEL_NUM];
-int index2 = 0;
-int imgNum2 = 0;
-QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdSUAL* parent)
+int index  = 0;
+int imgNum = 0;
+QvdGPU2Private::QvdGPU2Private(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdGPU2* parent)
 	: q_ptr(parent)
 	, station(station)
 	, camera(camera)
 	, threadID(threadID)
 	, productID(productID)
 {
-	if (index2 == 0){
+	if (index == 0){
 		int networkH = 700;
 		int networkW = 700;
 		int networkC = 1; // we currently support 1channel or BGR 3channel or BGRA 4channel 
@@ -21,13 +22,13 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 		SuaKIT::API::DeviceDescriptor::GetAvailableGPUDevices(deviceDescArray);
 		qWarning() << __LINE__;
 
-		wstring netWrokPathList[6] = { L"./model1/huahen.net", L"./model1/quejiao.net", L"./model1/zangwu.net" };
+		wstring netWrokPathList[6] = { L"./model2/huahen.net", L"./model2/quejiao.net", L"./model2/zangwu.net" };
 		// Init Evaluator
 		for (int i = 0; i < COLOR_CLASSIFICATION_MAX_MODEL_NUM; i++)
 		{
 			//qWarning() << __LINE__;
 			//qWarning() << deviceDescArray.GetLength();
-			citieSegmentationEvaluator[i] = new SuaKIT::API::SegmentationEvaluator(netWrokPathList[i].c_str(), deviceDescArray.GetAt(0), networkH, networkW, networkC);
+			citieSegmentationEvaluator[i] = new SuaKIT::API::SegmentationEvaluator(netWrokPathList[i].c_str(), deviceDescArray.GetAt(1), networkH, networkW, networkC);
 			//qWarning() << __LINE__;
 			if (citieSegmentationEvaluator[i]->GetStatus() != SuaKIT::API::SUCCESS)
 			{
@@ -37,7 +38,7 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 			}
 		}
 	}
-	index2++;
+	index++;
 }
 
 cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
@@ -86,9 +87,10 @@ cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
 	return matImage;
 }
 
-void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName)
+
+void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName)
 {
-	imgNum2++;
+	imgNum++;
 	if (citieSegmentationEvaluator[2] == nullptr || citieSegmentationEvaluator[1] == nullptr){
 		return;
 	}
@@ -273,7 +275,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				info.zangwu = (int)(info.value*100.0) / 100.0;
 				info.huahen = 0;
 				info.quejiao = 0;
-				info.index = imgNum2;
+				info.index = imgNum;
 				double radio = RoiArea / totalArea;
 				if (info.value >= q_ptr->m_dirtyThresh || radio >= q_ptr->m_dirtyArea)
 				{
@@ -341,7 +343,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					info.quejiao = (int)(dArea*100.0) / 100.0;
 					info.huahen = 0;
 					info.zangwu = 0;
-					info.index = imgNum2;
+					info.index = imgNum;
 					if (info.value >= q_ptr->m_losingAngle)
 					{
 						isNG = false;
@@ -404,7 +406,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					info.huahen = (int)(length*100.0) / 100.0;
 					info.quejiao = 0;
 					info.zangwu = 0;
-					info.index = imgNum2;
+					info.index = imgNum;
 					if (info.value >= q_ptr->m_scratchLength)
 					{
 						isNG = false;
@@ -421,7 +423,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 			csInfo info;
 			info.name = csFileName;
 			info.isOK = "OK";
-			info.index = imgNum2;
+			info.index = imgNum;
 			result = ("OK");
 			defectList.push_back(info);
 		}
@@ -433,7 +435,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 	}
 }
 
-BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double quejiao, double huahen, double zangwu, int i, int total, int index)
+BOOL QvdGPU2Private::SaveStatisticsExcel(string fileName, string type, double quejiao, double huahen, double zangwu, int i, int total, int index)
 {
 	SYSTEMTIME st;
 	string defectLogFile, statisticsLogFile, statisticsLogFile1;
@@ -572,7 +574,7 @@ BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double qu
 //	return true;
 //}
 //
-bool QvdSUALPrivate::UpdateNumberOfDefect(vector<csInfo>  *defectList1)
+bool QvdGPU2Private::UpdateNumberOfDefect(vector<csInfo>  *defectList1)
 {
 	size_t total = defectList1->size();
 	int i = 0;
@@ -590,13 +592,13 @@ bool QvdSUALPrivate::UpdateNumberOfDefect(vector<csInfo>  *defectList1)
 		quejiao = it->quejiao;
 		huahen = it->huahen;
 		index = it->index;
-		QvdSUALPrivate::SaveStatisticsExcel(fileName, type, quejiao, huahen, zangwu, i, total, index);
+		QvdGPU2Private::SaveStatisticsExcel(fileName, type, quejiao, huahen, zangwu, i, total, index);
 		i++;
 	}
 	return 0L;
 }
 
-void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi, const QByteArray& roiData = QByteArray())
+void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi, const QByteArray& roiData = QByteArray())
 {
 	q_ptr->initResultMeasure();
 	showType = QMVToolPlugin::ShowFail;
@@ -665,25 +667,25 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 			
 			if ((*i).defectKind == 0){
 				portFlag1 = true;
-				type = QvdSUAL::tr("diaojiao");
+				type = QvdGPU2::tr("diaojiao");
 			}
 
 			if ((*i).defectKind == 1){
 				portFlag2 = true;
-				type = QvdSUAL::tr("huahen");
+				type = QvdGPU2::tr("huahen");
 			}
 			if ((*i).defectKind == 2){
 				portFlag3 = true;
-				type = QvdSUAL::tr("zangwu");
+				type = QvdGPU2::tr("zangwu");
 			}
 
-			//resultStr = QvdSUAL::tr("Defect Type: ") + type;
+			//resultStr = QvdGPU2::tr("Defect Type: ") + type;
 			//_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdSUAL::tr("Area/Contrast") + QString("%1: %2").arg(lineIndex - 2).arg(AreaOrContrast, 0, 'f', 3);
+			//resultStr = QvdGPU2::tr("Area/Contrast") + QString("%1: %2").arg(lineIndex - 2).arg(AreaOrContrast, 0, 'f', 3);
 			//_paint.drawText(image.Height() / 20 + 300, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdSUAL::tr("Length") + QString("%1: %2").arg(lineIndex - 2).arg(len);
+			//resultStr = QvdGPU2::tr("Length") + QString("%1: %2").arg(lineIndex - 2).arg(len);
 			//_paint.drawText(image.Height() / 20 + 800, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdSUAL::tr("Width") + QString("%1: %2").arg(lineIndex - 2).arg(wid);
+			//resultStr = QvdGPU2::tr("Width") + QString("%1: %2").arg(lineIndex - 2).arg(wid);
 			//_paint.drawText(image.Height() / 20 + 1100, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
 		}
 		
@@ -709,7 +711,7 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 			//cv::imwrite(imgPath, srcImg);
 			_paint.setPen(Qt::red);
 			resultStatus = QMVToolPlugin::FAIL;
-			resultStr = QvdSUAL::tr("NG");
+			resultStr = QvdGPU2::tr("NG");
 			_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
 		}
 		else{
@@ -717,7 +719,7 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 			cv::imwrite(imgPath, srcImg);
 			_paint.setPen(Qt::green);
 			resultStatus = QMVToolPlugin::OK;
-			resultStr = QvdSUAL::tr("OK");
+			resultStr = QvdGPU2::tr("OK");
 			_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
 		}
 		
@@ -726,7 +728,7 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 	catch (const Halcon::HException& e) {
 		_paint.setPen(Qt::yellow);
 		resultStatus = QMVToolPlugin::VAGUE;
-		qWarning() << "vdSUAL.dll:" << e.message;
+		qWarning() << "vdGPU2.dll:" << e.message;
 		return;
 	}
 }
