@@ -36,7 +36,7 @@ protected:
     void run(const Halcon::HImage&, const Halcon::HRegion&, const QByteArray&);
 	BOOL SaveStatisticsExcel(string fileName, string type, double quejiao, double huahen, double zangwu, int i, int total, int index);
 	bool UpdateNumberOfDefect(vector<csInfo>  *defectList1);
-	void ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName);
+	void ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName, double dirtyThresh, double dirtyArea, double scratchLen, double losingEdgeArea);
 private:
 	Q_DECLARE_PUBLIC(QvdGPU2)
 	QvdGPU2* const q_ptr;
@@ -47,7 +47,7 @@ private:
     QMVToolPlugin::ShowType showType;
     QString resultStr;
     int resultStatus;
-    int resultOutport;
+    int resultOutport = -1;
     QPixmap resultPixmap;
     QFixture resultFixture;
     Halcon::HRegionArray resultRegions;

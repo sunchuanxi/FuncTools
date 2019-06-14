@@ -4,10 +4,10 @@ import QtQuick.Layouts 1.1
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2 as NewControl
-//import com.zigaa.data 1.0
+import com.zigaa.data 1.0
 
 Item {
-    //enabled: accountData.currentGroup >= AccountData.Technician
+    enabled: accountData.currentGroup >= AccountData.Technician
 
     implicitWidth: childrenRect.width
     implicitHeight: childrenRect.height+10

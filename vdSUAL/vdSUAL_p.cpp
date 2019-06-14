@@ -86,7 +86,7 @@ cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
 	return matImage;
 }
 
-void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName)
+void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName, double dirtyThresh, double dirtyArea, double scratchLen, double losingEdgeArea)
 {
 	imgNum2++;
 	if (citieSegmentationEvaluator[2] == nullptr || citieSegmentationEvaluator[1] == nullptr){
@@ -275,7 +275,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				info.quejiao = 0;
 				info.index = imgNum2;
 				double radio = RoiArea / totalArea;
-				if (info.value >= q_ptr->m_dirtyThresh || radio >= q_ptr->m_dirtyArea)
+				if (info.value >= dirtyThresh || radio >= dirtyArea)
 				{
 					isNG = false;
 					result = "NG";
@@ -342,7 +342,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					info.huahen = 0;
 					info.zangwu = 0;
 					info.index = imgNum2;
-					if (info.value >= q_ptr->m_losingAngle)
+					if (info.value >= losingEdgeArea)
 					{
 						isNG = false;
 						result = ("NG");
@@ -352,7 +352,6 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				}
 			}
 		}
-		//qWarning() << __LINE__ << "test";
 
 		//¼ì²â»®ºÛ
 		SuaKIT::API::ImageData curImg2(bin.data, bin.step, bin.cols, bin.rows, bin.channels(), roi);
@@ -405,7 +404,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					info.quejiao = 0;
 					info.zangwu = 0;
 					info.index = imgNum2;
-					if (info.value >= q_ptr->m_scratchLength)
+					if (info.value >= scratchLen)
 					{
 						isNG = false;
 						result = ("NG");
@@ -640,7 +639,7 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 		//cv::imwrite(imgPath, srcImg);
 		vector<csInfo> result;
 		//qWarning() << __LINE__ << " : test";
-		ProcessImage(srcImg, result, timestamp.toStdString());
+		ProcessImage(srcImg, result, timestamp.toStdString(), q_ptr->m_dirtyThresh, q_ptr->m_dirtyArea, q_ptr->m_scratchLength, q_ptr->m_losingAngle);
 		
 		for (vector<csInfo>::iterator i = result.begin(); i != result.end(); i++){
 			/*qWarning() << __LINE__;

@@ -3,10 +3,12 @@
 #include "vdGPU2_p.h" 
 #include "opencv2\opencv.hpp"
 #include "SuaKITRuntime.h"
+#include <fstream>
 using namespace std;
 SuaKIT::API::SegmentationEvaluator* citieSegmentationEvaluator[COLOR_CLASSIFICATION_MAX_MODEL_NUM];
 int index  = 0;
 int imgNum = 0;
+
 QvdGPU2Private::QvdGPU2Private(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdGPU2* parent)
 	: q_ptr(parent)
 	, station(station)
@@ -87,14 +89,13 @@ cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
 	return matImage;
 }
 
-
-void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName)
+void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName, double dirtyThresh, double dirtyArea, double scratchLen, double losingEdgeArea)
 {
 	imgNum++;
 	if (citieSegmentationEvaluator[2] == nullptr || citieSegmentationEvaluator[1] == nullptr){
 		return;
 	}
-	//qWarning() << __LINE__ << "test";
+
 	cv::Mat rstImg;
 	{
 		string result;
@@ -119,6 +120,7 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 		cv::Mat bin;
 		srcImg.copyTo(bin);
 		cv::Rect ROIrect(318, 154, 700, 700);
+		//将图像切割为700x700大小的
 		if (srcImg.cols > 700 && srcImg.rows > 700)
 		{
 			srcImg = srcImg(ROIrect);
@@ -162,11 +164,10 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 		}
 		findContours(pic_clear, vecContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 		cv::Rect boundRect;//定义cv::Rect类型的vector容器boundRect存放正外接矩形，初始化大小为轮廓个数
-		int iFin = 0;
-		int widthMax = 0;
+		int iFin      = 0;
+		int widthMax  = 0;
 		int heightMax = 0;
-		for (int i = 0; i < vecContours.size(); i++)
-		{
+		for (int i = 0; i < vecContours.size(); i++){
 			boundRect = boundingRect(cv::Mat(vecContours[i]));
 			if (boundRect.width < 200 || boundRect.height < 200)
 				continue;
@@ -182,8 +183,7 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 		totalArea = cv::contourArea(vecContours[iFin]);
 		drawContours(mask, vecContours, iFin, cv::Scalar(1), CV_FILLED, 8);
 		cv::Mat dst1(srcImg.rows, srcImg.cols, srcImg.type(), cv::Scalar());
-		if (resultRects.GetLength() != 0)
-		{
+		if (resultRects.GetLength() != 0){
 			cv::Mat img = ~resultMat;
 			std::vector<std::vector<cv::Point>> vecContour;
 			findContours(img.clone(), vecContour, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
@@ -229,6 +229,7 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 			double res = srcImg.dot(mask);
 			double bacM = res / num;
 			int count = 0;
+			
 			for (int k = 0; k < defectImg.size(); k++)
 			{
 				cv::Mat defectImgTemp;
@@ -277,7 +278,7 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				info.quejiao = 0;
 				info.index = imgNum;
 				double radio = RoiArea / totalArea;
-				if (info.value >= q_ptr->m_dirtyThresh || radio >= q_ptr->m_dirtyArea)
+				if (info.value >= dirtyThresh || radio >= dirtyArea)
 				{
 					isNG = false;
 					result = "NG";
@@ -344,7 +345,7 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					info.huahen = 0;
 					info.zangwu = 0;
 					info.index = imgNum;
-					if (info.value >= q_ptr->m_losingAngle)
+					if (info.value >= losingEdgeArea)
 					{
 						isNG = false;
 						result = ("NG");
@@ -354,7 +355,6 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				}
 			}
 		}
-		//qWarning() << __LINE__ << "test";
 
 		//检测划痕
 		SuaKIT::API::ImageData curImg2(bin.data, bin.step, bin.cols, bin.rows, bin.channels(), roi);
@@ -407,7 +407,7 @@ void QvdGPU2Private::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					info.quejiao = 0;
 					info.zangwu = 0;
 					info.index = imgNum;
-					if (info.value >= q_ptr->m_scratchLength)
+					if (info.value >= scratchLen)
 					{
 						isNG = false;
 						result = ("NG");
@@ -619,7 +619,6 @@ void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 
 	try{
 		QString type;
-
 		cv::Mat srcImg;
 		srcImg = HImage2Mat(image);
 		QString timestamp;
@@ -642,8 +641,7 @@ void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 		//cv::imwrite(imgPath, srcImg);
 		vector<csInfo> result;
 		//qWarning() << __LINE__ << " : test";
-		ProcessImage(srcImg, result, timestamp.toStdString());
-		
+		ProcessImage(srcImg, result, timestamp.toStdString(), q_ptr->m_dirtyThresh, q_ptr->m_dirtyArea, q_ptr->m_scratchLength, q_ptr->m_losingAngle);
 		for (vector<csInfo>::iterator i = result.begin(); i != result.end(); i++){
 			/*qWarning() << __LINE__;
 			cout << "OKorNG: "<< (*i).isOK << endl;
@@ -732,5 +730,3 @@ void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 		return;
 	}
 }
-
-

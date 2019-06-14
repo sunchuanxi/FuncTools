@@ -32,10 +32,10 @@ class QvdSUAL : public QObject {
 	Q_PROPERTY(int scratchPort MEMBER m_scratchPort NOTIFY scratchPortChanged)
 	Q_PROPERTY(int mudgePort MEMBER m_mudgePort NOTIFY mudgePortChanged)
 
-    Q_PROPERTY(int dirtyArea     MEMBER m_dirtyArea     NOTIFY dirtyAreaChanged)
-    Q_PROPERTY(int dirtyThresh   MEMBER m_dirtyThresh   NOTIFY dirtyThreshChanged)
-    Q_PROPERTY(int losingAngle   MEMBER m_losingAngle   NOTIFY losingAngleChanged)
-    Q_PROPERTY(int scratchLength MEMBER m_scratchLength NOTIFY scratchLengthChanged)
+    Q_PROPERTY(double dirtyArea     MEMBER m_dirtyArea     NOTIFY dirtyAreaChanged)
+    Q_PROPERTY(double dirtyThresh   MEMBER m_dirtyThresh   NOTIFY dirtyThreshChanged)
+    Q_PROPERTY(double losingAngle   MEMBER m_losingAngle   NOTIFY losingAngleChanged)
+    Q_PROPERTY(double scratchLength MEMBER m_scratchLength NOTIFY scratchLengthChanged)
 
     Q_PROPERTY(QMVToolPlugin::ShowType showType READ showType CONSTANT)
     Q_PROPERTY(QString resultStr READ resultStr CONSTANT)
