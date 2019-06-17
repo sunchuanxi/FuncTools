@@ -616,6 +616,7 @@ void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 	bool portFlag1 = false;
 	bool portFlag2 = false;
 	bool portFlag3 = false;
+	resultOutport = -1;
 
 	try{
 		QString type;
