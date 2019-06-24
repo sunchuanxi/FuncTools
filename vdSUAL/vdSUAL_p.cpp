@@ -25,10 +25,7 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 		// Init Evaluator
 		for (int i = 0; i < COLOR_CLASSIFICATION_MAX_MODEL_NUM; i++)
 		{
-			//qWarning() << __LINE__;
-			//qWarning() << deviceDescArray.GetLength();
 			citieSegmentationEvaluator[i] = new SuaKIT::API::SegmentationEvaluator(netWrokPathList[i].c_str(), deviceDescArray.GetAt(0), networkH, networkW, networkC);
-			//qWarning() << __LINE__;
 			if (citieSegmentationEvaluator[i]->GetStatus() != SuaKIT::API::SUCCESS)
 			{
 				citieSegmentationEvaluator[i]->Destroy();
@@ -73,9 +70,6 @@ cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
 			memcpy(imgG.ptr() + imgG.step*i, (void *)(ptrGreen + imgWidth*i), imgWidth);
 			memcpy(imgB.ptr() + imgB.step*i, (void *)(ptrBlue + imgWidth*i), imgWidth);
 		}
-		//imwrite("R.jpeg", imgR);
-		//imwrite("G.jpeg", imgG);
-		//imwrite("B.jpeg", imgB);
 		std::vector<cv::Mat> mgImage;
 		mgImage.push_back(imgB);
 		mgImage.push_back(imgG);
@@ -92,7 +86,6 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 	if (citieSegmentationEvaluator[2] == nullptr || citieSegmentationEvaluator[1] == nullptr){
 		return;
 	}
-	//qWarning() << __LINE__ << "test";
 	cv::Mat rstImg;
 	{
 		string result;
@@ -125,7 +118,6 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 		{
 			return;
 		}
-		//qWarning() << __LINE__ << "test";
 
 		//
 		srcImg.copyTo(srcImg);
@@ -133,9 +125,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 		SuaKIT::API::ImageData curImg(bin.data, bin.step, bin.cols, bin.rows, bin.channels(), roi);
 
 		//检测脏污
-		//qWarning() << __LINE__ << "test";
 		size_t numClass2 = citieSegmentationEvaluator[2]->GetClassTotalNum();
-		//qWarning() << __LINE__ << "test";
 		SuaKIT::API::SizeArray minDefectSizes2(numClass2);
 		for (int i = 0; i < numClass2; ++i)
 		{
@@ -285,7 +275,6 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 			}
 			//}
 		}
-		//qWarning() << __LINE__ << "test";
 
 		//检测缺角
 		size_t numClass = citieSegmentationEvaluator[1]->GetClassTotalNum();
@@ -306,7 +295,7 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 		cv::Mat img = ~resultMat1;
 		if (resultRects1.GetLength() > 0)
 		{
-			for (int jIndex = 0; jIndex<resultRects1.GetLength(); jIndex++)
+			for (int jIndex = 0; jIndex < resultRects1.GetLength(); jIndex++)
 			{
 				SuaKIT::API::Rect temp = resultRects1.GetAt(jIndex);
 				if (temp.x > boundRect.x&&temp.y > boundRect.y&& temp.x < boundRect.x + boundRect.width&&temp.y < boundRect.y + boundRect.height)
@@ -413,7 +402,6 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					}
 				}
 			}
-			//saveResult
 		}
 		if (isNG)
 		{
@@ -437,8 +425,6 @@ BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double qu
 	SYSTEMTIME st;
 	string defectLogFile, statisticsLogFile, statisticsLogFile1;
 	GetLocalTime(&st);
-	//statisticsLogFile1.Format(("D:\\SuakitDetectCsv\\%d%d%d_statistics.csv"), st.wYear, st.wMonth, st.wDay);
-	//QDir path = R"(D:\SuakitDetectCsv\)";
 	QString myPath = "D:/SuakitDetectCsv";
 	myPath = myPath.append(QString::number(q_ptr->m_calibration_type + 1)).append("/");
 	QDir path(myPath);
@@ -446,7 +432,7 @@ BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double qu
 		path.mkdir(myPath);
 	}
 	statisticsLogFile1 = myPath.append(QDateTime::currentDateTime().toString("yyyy-MM-dd").remove(":").remove("-").remove(" ")) \
-			.append("_statistics.csv").toStdString();
+		.append("_statistics.csv").toStdString();
 
 	bool file_status;
 	ifstream iFile(statisticsLogFile1, ios::in);
@@ -492,7 +478,6 @@ BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double qu
 	}
 	else
 	{
-		//oFile.open(statisticsLogFile1, ios::out | ios::app);    // 这样就很容易的输出一个需要的excel 文件  
 		oFile << "No" << "," << "Timing" << "," << "Result" << "," << "Dent(mm*mm)" << "," << "Scratch(mm)" << "," << "Dirt(%)" << endl;
 		if (i != (total - 1))
 		{
@@ -527,50 +512,6 @@ BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double qu
 	return true;
 }
 
-//BOOL SaveStatisticsExcel(string fileName, string type, double quejiao, double zangwu, double huahen, int i, int total, int index)
-//{
-//	SYSTEMTIME st;
-//	string defectLogFile, statisticsLogFile, statisticsLogFile1;
-//	GetLocalTime(&st);
-
-//QDir path = R"(D:\SuakitDetectCsv\)";
-//QString myPath = R"(D:\SuakitDetectCsv\)";
-//if (!path.exists()){
-//	path.mkdir(myPath);
-//}
-//	statisticsLogFile1 = name1.append(QDateTime::currentDateTime().toString("yyyy-MM-dd").remove(":").remove("-").remove(" ")) \
-//		.append("_statistics.csv").toStdString();
-//
-//	bool file_status;
-//	ifstream iFile(statisticsLogFile1, ios::in);
-//	file_status = iFile.is_open();
-//	iFile.close();
-//
-//	std::string sz1 = fileName;
-//	std::string sz2 = type;
-//	//std::string sz3 = defectKind;
-//
-//	ofstream oFile(statisticsLogFile1, ios::out | ios::app);
-//
-//	if (file_status)
-//	{
-//		if (i != (total - 1))
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << endl;
-//		else
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << "\n" << endl;
-//	}
-//	else
-//	{
-//		oFile << "文件名" << "," << "检测结果" << "," << "缺陷类型" << "," << "值" << endl;
-//		if (i != (total - 1))
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << endl;
-//		else
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << "\n" << endl;
-//	}
-//	oFile.close();
-//	return true;
-//}
-//
 bool QvdSUALPrivate::UpdateNumberOfDefect(vector<csInfo>  *defectList1)
 {
 	size_t total = defectList1->size();
@@ -579,7 +520,7 @@ bool QvdSUALPrivate::UpdateNumberOfDefect(vector<csInfo>  *defectList1)
 	{
 		string fileName, type, defectKind;
 		//int ngNum;
-		double value,zangwu,quejiao,huahen;
+		double value, zangwu, quejiao, huahen;
 		int index;
 		fileName = it->name;
 		type = it->isOK;
@@ -615,94 +556,73 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 	bool portFlag3 = false;
 	resultOutport = -1;
 
+	ofstream data;
+	data.open(R"(D:/data.txt)", std::ios::app);
+	data << index2 << ":" << "\n";
 	try{
+		resultOutport = -1;
 		QString type;
 
 		cv::Mat srcImg;
 		srcImg = HImage2Mat(image);
 		QString timestamp;
 		timestamp = QDateTime::currentDateTime().toString("MM-dd hh:mm:ss.z").remove(":").remove("-").remove(" ");
-		//timestamp.toStdString();
 		string imgPath;
-		//CreateDirectory((LPCWSTR)(imgPath.c_str()), NULL);
-		//system("md D:\\origalImg\\");
-		//QDir path = R"(D:\origalImg\)";
 		QString myPath = "D:/origalImg";
 		myPath = myPath.append(QString::number(q_ptr->m_calibration_type + 1)).append("/");
 		QDir path(myPath);
 		if (!path.exists()){
 			path.mkdir(myPath);
-			//system("md D:\\origalImg\\");
 		}
-			
+
 		const char *fileName = myPath.toStdString().c_str(), *tag;
 		imgPath = myPath.toStdString() + timestamp.toStdString();
-		//cv::imwrite(imgPath, srcImg);
 		vector<csInfo> result;
-		//qWarning() << __LINE__ << " : test";
 		ProcessImage(srcImg, result, timestamp.toStdString(), q_ptr->m_dirtyThresh, q_ptr->m_dirtyArea, q_ptr->m_scratchLength, q_ptr->m_losingAngle);
-		
+
 		for (vector<csInfo>::iterator i = result.begin(); i != result.end(); i++){
-			/*qWarning() << __LINE__;
-			cout << "OKorNG: "<< (*i).isOK << endl;
-			cout << "name: " << (*i).name << endl;
-			cout << "zangwu: " << (*i).zangwu << endl;
-			cout << "quejiao: " << (*i).quejiao << endl;
-			cout << "huahen: " << (*i).huahen << endl;
-			cout << "height: " << (*i).height << endl;
-			cout << "width: " << (*i).width << endl;
-			cout << "x: " << (*i).x << endl;
-			cout << "y: " << (*i).y << endl;
-			cout << "value: " << (*i).value << endl;
-			cout << "index: " << (*i).index << endl;*/
 			if ((*i).isOK == "NG"){
 				flagResult = false;
 				resultStatus = QMVToolPlugin::FAIL;
 				Halcon::HRegion resReg;
 				resReg = Halcon::HRegion::GenRectangle1((*i).y, (*i).x, (*i).y + (*i).height, (*i).x + (*i).width);
 				resultRegions.Append(resReg);
-			}
-			
-			if ((*i).defectKind == 0){
-				portFlag1 = true;
-				type = QvdSUAL::tr("diaojiao");
-			}
 
-			if ((*i).defectKind == 1){
-				portFlag2 = true;
-				type = QvdSUAL::tr("huahen");
-			}
-			if ((*i).defectKind == 2){
-				portFlag3 = true;
-				type = QvdSUAL::tr("zangwu");
-			}
+				if ((*i).defectKind == 0){
+					portFlag1 = true;
+					type = QvdSUAL::tr("diaojiao");
+					data << "缺陷类型：" << "diaojiao" << "\n";
+				}
 
-			//resultStr = QvdSUAL::tr("Defect Type: ") + type;
-			//_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdSUAL::tr("Area/Contrast") + QString("%1: %2").arg(lineIndex - 2).arg(AreaOrContrast, 0, 'f', 3);
-			//_paint.drawText(image.Height() / 20 + 300, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdSUAL::tr("Length") + QString("%1: %2").arg(lineIndex - 2).arg(len);
-			//_paint.drawText(image.Height() / 20 + 800, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdSUAL::tr("Width") + QString("%1: %2").arg(lineIndex - 2).arg(wid);
-			//_paint.drawText(image.Height() / 20 + 1100, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
+				if ((*i).defectKind == 1){
+					portFlag2 = true;
+					type = QvdSUAL::tr("huahen");
+					data << "缺陷类型：" << "huahen" << "\n";
+				}
+				if ((*i).defectKind == 2){
+					portFlag3 = true;
+					type = QvdSUAL::tr("zangwu");
+					data << "缺陷类型：" << "zangwu" << "\n";
+				}
+			}
 		}
-		
+
 		if (portFlag1){
 			resultOutport = q_ptr->m_edgePort - 1;
-			//flagResult = false;
 		}
 		if (!portFlag1 && portFlag2){
 			resultOutport = q_ptr->m_scratchPort - 1;
-			//flagResult = false;
 		}
 		if (!portFlag1 && !portFlag2 && portFlag3){
 			resultOutport = q_ptr->m_mudgePort - 1;
-			//flagResult = false;
 		}
-		
+
 		//生成数据表格
 		UpdateNumberOfDefect(&result);
-		
+		data << "设置的剔除口:" << "缺角:" << q_ptr->m_edgePort << "," << "划痕:" << q_ptr->m_scratchPort << "脏污：" << q_ptr->m_mudgePort << "\n";
+		data << "最终剔除口(相机1)：" << (resultOutport + 1) << "\n";
+		data << "结果状态：" << flagResult << "\n";
+
 		if (!flagResult){
 			imgPath = imgPath + "_NG" + ".bmp";
 			cv::imwrite(imgPath, srcImg);
@@ -720,13 +640,14 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 			resultStr = QvdSUAL::tr("OK");
 			_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
 		}
-		
+		data.close();
 		return;
 	}
-	catch (const Halcon::HException& e) {
+	catch (const Halcon::HException& e){
 		_paint.setPen(Qt::yellow);
 		resultStatus = QMVToolPlugin::VAGUE;
 		qWarning() << "vdSUAL.dll:" << e.message;
+		data.close();
 		return;
 	}
 }

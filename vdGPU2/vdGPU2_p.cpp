@@ -530,50 +530,6 @@ BOOL QvdGPU2Private::SaveStatisticsExcel(string fileName, string type, double qu
 	return true;
 }
 
-//BOOL SaveStatisticsExcel(string fileName, string type, double quejiao, double zangwu, double huahen, int i, int total, int index)
-//{
-//	SYSTEMTIME st;
-//	string defectLogFile, statisticsLogFile, statisticsLogFile1;
-//	GetLocalTime(&st);
-
-//QDir path = R"(D:\SuakitDetectCsv\)";
-//QString myPath = R"(D:\SuakitDetectCsv\)";
-//if (!path.exists()){
-//	path.mkdir(myPath);
-//}
-//	statisticsLogFile1 = name1.append(QDateTime::currentDateTime().toString("yyyy-MM-dd").remove(":").remove("-").remove(" ")) \
-//		.append("_statistics.csv").toStdString();
-//
-//	bool file_status;
-//	ifstream iFile(statisticsLogFile1, ios::in);
-//	file_status = iFile.is_open();
-//	iFile.close();
-//
-//	std::string sz1 = fileName;
-//	std::string sz2 = type;
-//	//std::string sz3 = defectKind;
-//
-//	ofstream oFile(statisticsLogFile1, ios::out | ios::app);
-//
-//	if (file_status)
-//	{
-//		if (i != (total - 1))
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << endl;
-//		else
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << "\n" << endl;
-//	}
-//	else
-//	{
-//		oFile << "文件名" << "," << "检测结果" << "," << "缺陷类型" << "," << "值" << endl;
-//		if (i != (total - 1))
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << endl;
-//		else
-//			oFile << sz1 << "," << sz2 << "," << sz3 << "," << value << "," << "\n" << endl;
-//	}
-//	oFile.close();
-//	return true;
-//}
-//
 bool QvdGPU2Private::UpdateNumberOfDefect(vector<csInfo>  *defectList1)
 {
 	size_t total = defectList1->size();
@@ -618,96 +574,77 @@ void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 	bool portFlag3 = false;
 	resultOutport = -1;
 
+	ofstream data;
+	data.open(R"(D:/data.txt)", std::ios::app);
+	data << index << ":" << "\n";
+
 	try{
+		resultOutport = -1;
 		QString type;
 		cv::Mat srcImg;
 		srcImg = HImage2Mat(image);
 		QString timestamp;
 		timestamp = QDateTime::currentDateTime().toString("MM-dd hh:mm:ss.z").remove(":").remove("-").remove(" ");
-		//timestamp.toStdString();
 		string imgPath;
-		//CreateDirectory((LPCWSTR)(imgPath.c_str()), NULL);
-		//system("md D:\\origalImg\\");
-		//QDir path = R"(D:\origalImg\)";
 		QString myPath = "D:/origalImg";
 		myPath = myPath.append(QString::number(q_ptr->m_calibration_type + 1)).append("/");
 		QDir path(myPath);
 		if (!path.exists()){
 			path.mkdir(myPath);
-			//system("md D:\\origalImg\\");
 		}
 			
 		const char *fileName = myPath.toStdString().c_str(), *tag;
 		imgPath = myPath.toStdString() + timestamp.toStdString();
-		//cv::imwrite(imgPath, srcImg);
 		vector<csInfo> result;
-		//qWarning() << __LINE__ << " : test";
 		ProcessImage(srcImg, result, timestamp.toStdString(), q_ptr->m_dirtyThresh, q_ptr->m_dirtyArea, q_ptr->m_scratchLength, q_ptr->m_losingAngle);
 		for (vector<csInfo>::iterator i = result.begin(); i != result.end(); i++){
-			/*qWarning() << __LINE__;
-			cout << "OKorNG: "<< (*i).isOK << endl;
-			cout << "name: " << (*i).name << endl;
-			cout << "zangwu: " << (*i).zangwu << endl;
-			cout << "quejiao: " << (*i).quejiao << endl;
-			cout << "huahen: " << (*i).huahen << endl;
-			cout << "height: " << (*i).height << endl;
-			cout << "width: " << (*i).width << endl;
-			cout << "x: " << (*i).x << endl;
-			cout << "y: " << (*i).y << endl;
-			cout << "value: " << (*i).value << endl;
-			cout << "index: " << (*i).index << endl;*/
 			if ((*i).isOK == "NG"){
 				flagResult = false;
 				resultStatus = QMVToolPlugin::FAIL;
 				Halcon::HRegion resReg;
 				resReg = Halcon::HRegion::GenRectangle1((*i).y, (*i).x, (*i).y + (*i).height, (*i).x + (*i).width);
 				resultRegions.Append(resReg);
-			}
-			
-			if ((*i).defectKind == 0){
-				portFlag1 = true;
-				type = QvdGPU2::tr("diaojiao");
-			}
 
-			if ((*i).defectKind == 1){
-				portFlag2 = true;
-				type = QvdGPU2::tr("huahen");
-			}
-			if ((*i).defectKind == 2){
-				portFlag3 = true;
-				type = QvdGPU2::tr("zangwu");
-			}
+				if ((*i).defectKind == 0)
+				{
+					portFlag1 = true;
+					type = QvdGPU2::tr("diaojiao");
+					data << "缺陷类型：" << "diaojiao" << "\n";
+				}
 
-			//resultStr = QvdGPU2::tr("Defect Type: ") + type;
-			//_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdGPU2::tr("Area/Contrast") + QString("%1: %2").arg(lineIndex - 2).arg(AreaOrContrast, 0, 'f', 3);
-			//_paint.drawText(image.Height() / 20 + 300, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdGPU2::tr("Length") + QString("%1: %2").arg(lineIndex - 2).arg(len);
-			//_paint.drawText(image.Height() / 20 + 800, image.Height() / 20 + (fontsize*1.5*textLine), resultStr);
-			//resultStr = QvdGPU2::tr("Width") + QString("%1: %2").arg(lineIndex - 2).arg(wid);
-			//_paint.drawText(image.Height() / 20 + 1100, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
+				if ((*i).defectKind == 1)
+				{
+					portFlag2 = true;
+					type = QvdGPU2::tr("huahen");
+					data << "缺陷类型：" << "huahen" << "\n";
+				}
+				if ((*i).defectKind == 2)
+				{
+					portFlag3 = true;
+					type = QvdGPU2::tr("zangwu");
+					data << "缺陷类型：" << "zangwu" << "\n";
+				}
+			}
 		}
 		
 		if (portFlag1){
 			resultOutport = q_ptr->m_edgePort - 1;
-			//flagResult = false;
 		}
 		if (!portFlag1 && portFlag2){
 			resultOutport = q_ptr->m_scratchPort - 1;
-			//flagResult = false;
 		}
 		if (!portFlag1 && !portFlag2 && portFlag3){
 			resultOutport = q_ptr->m_mudgePort - 1;
-			//flagResult = false;
 		}
 		
 		//生成数据表格
 		UpdateNumberOfDefect(&result);
-		
+		data << "设置的剔除口:" << "缺角:" << q_ptr->m_edgePort << "," << "划痕:" << q_ptr->m_scratchPort << "脏污：" << q_ptr->m_mudgePort << "\n";
+		data << "最终剔除口(相机2)：" << (resultOutport + 1) << "\n";
+		data << "结果状态：" << flagResult << "\n";
 		if (!flagResult){
 			imgPath = imgPath + "_NG" + ".bmp";
 			cv::imwrite(imgPath, srcImg);
-			//cv::imwrite(imgPath, srcImg);
 			_paint.setPen(Qt::red);
 			resultStatus = QMVToolPlugin::FAIL;
 			resultStr = QvdGPU2::tr("NG");
@@ -724,7 +661,7 @@ void QvdGPU2Private::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 		
 		return;
 	}
-	catch (const Halcon::HException& e) {
+	catch (const Halcon::HException& e){
 		_paint.setPen(Qt::yellow);
 		resultStatus = QMVToolPlugin::VAGUE;
 		qWarning() << "vdGPU2.dll:" << e.message;
