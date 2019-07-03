@@ -17,7 +17,7 @@ struct csInfo
 	string name;
 	string isOK = "OK";
 	int index = 0;
-	int defectKind = 0;
+	int defectKind = -1;
 	int x = 0;
 	int y = 0;
 	int width = 0;
