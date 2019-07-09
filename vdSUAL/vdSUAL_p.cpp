@@ -13,7 +13,7 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 	, threadID(threadID)
 	, productID(productID)
 {
-	if (index2 < 3)
+	//if (index2 < 3)
 	{
 		int networkH = 700;
 		int networkW = 700;
