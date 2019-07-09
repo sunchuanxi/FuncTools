@@ -4,7 +4,7 @@
 #include "opencv2\opencv.hpp"
 using namespace std;
 SuaKIT::API::SegmentationEvaluator* citieSegmentationEvaluator[COLOR_CLASSIFICATION_MAX_MODEL_NUM];
-//int index2 = 0;
+int index2  = 0;
 int imgNum2 = 0;
 QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdSUAL* parent)
 	: q_ptr(parent)
@@ -13,7 +13,7 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 	, threadID(threadID)
 	, productID(productID)
 {
-	//if (index2 == 0)
+	if (index2 < 3)
 	{
 		int networkH = 700;
 		int networkW = 700;
@@ -33,9 +33,11 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 				citieSegmentationEvaluator[i] = nullptr;
 			}
 		}
-		qWarning() << __LINE__;
+
+		if (index2==0)
+		  qWarning() << __LINE__;
 	}
-	//index2++;
+	index2++;
 }
 
 cv::Mat  HImage2Mat(const Halcon::HImage& hImage){

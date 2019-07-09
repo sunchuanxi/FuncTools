@@ -6,7 +6,7 @@
 #include <fstream>
 using namespace std;
 SuaKIT::API::SegmentationEvaluator* citieSegmentationEvaluator[COLOR_CLASSIFICATION_MAX_MODEL_NUM];
-//int index  = 0;
+int index  = 0;
 int imgNum = 0;
 
 QvdGPU2Private::QvdGPU2Private(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdGPU2* parent)
@@ -16,7 +16,7 @@ QvdGPU2Private::QvdGPU2Private(quint8 station, quint8 camera, quint8 threadID, q
 	, threadID(threadID)
 	, productID(productID)
 {
-	//if (index == 0)
+	if (index < 3)
 	{
 		int networkH = 700;
 		int networkW = 700;
@@ -40,9 +40,10 @@ QvdGPU2Private::QvdGPU2Private(quint8 station, quint8 camera, quint8 threadID, q
 				citieSegmentationEvaluator[i] = nullptr; 
 			}
 		}
-		qWarning() << __LINE__;
+		if (index==0)
+		  qWarning() << __LINE__;
 	}
-	//index++;
+	index++;
 }
 
 cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
