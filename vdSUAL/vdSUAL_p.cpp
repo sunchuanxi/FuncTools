@@ -2,10 +2,13 @@
 #include "vdSUAL.h"
 #include "vdSUAL_p.h" 
 #include "opencv2\opencv.hpp"
+#include "spdhelper.hpp"
 using namespace std;
+
 SuaKIT::API::SegmentationEvaluator* citieSegmentationEvaluator[COLOR_CLASSIFICATION_MAX_MODEL_NUM];
 int index2  = 0;
 int imgNum2 = 0;
+
 QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, quint16 productID, QvdSUAL* parent)
 	: q_ptr(parent)
 	, station(station)
@@ -13,7 +16,7 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 	, threadID(threadID)
 	, productID(productID)
 {
-	//if (index2 < 3)
+	if (index2 == 0)
 	{
 		int networkH = 700;
 		int networkW = 700;
@@ -21,7 +24,7 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 		SuaKIT::API::DeviceDescriptorArray deviceDescArray;
 		SuaKIT::API::DeviceDescriptor::GetAllGPUDevices(deviceDescArray);		
 
-		wstring netWrokPathList[6] = { L"./model1/huahen.net", L"./model1/quejiao.net", L"./model1/zangwu.net" };//, L"./model1/yiwu.net"};
+		wstring netWrokPathList[6] = {L"./model1/quejiao.net", L"./model1/zangwu.net" };//, L"./model1/yiwu.net"};
 		// Init Evaluator
 		for (int i = 0; i < COLOR_CLASSIFICATION_MAX_MODEL_NUM; i++)
 		{
@@ -38,6 +41,8 @@ QvdSUALPrivate::QvdSUALPrivate(quint8 station, quint8 camera, quint8 threadID, q
 		  qWarning() << __LINE__;
 	}
 	index2++;
+
+	bc::spdhelper::LOG_INIT("vdSUAL.log", "./log", false, true);
 }
 
 cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
@@ -86,6 +91,7 @@ cv::Mat  HImage2Mat(const Halcon::HImage& hImage){
 void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, string csFileName, double dirtyThresh, double dirtyArea, double scratchLen, double losingEdgeArea)
 {
 	//try
+	
 	{
 		imgNum2++;
 		if (citieSegmentationEvaluator[1] == nullptr || citieSegmentationEvaluator[0] == nullptr){
@@ -107,8 +113,12 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 			SuaKIT::API::RectArray resultRects1;
 			SuaKIT::API::ImageData resultImg2;
 			SuaKIT::API::RectArray resultRects2;
+			SuaKIT::API::Status status;
 
 			bool isNG = true;
+			bool isDent = false;
+			bool isHuahen = false;
+			bool isZangwu = false;
 			img.copyTo(srcImg);//
 			/*cv::Mat huahen;
 			srcImg.copyTo(huahen);
@@ -162,17 +172,14 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 			totalArea = cv::contourArea(vecContours[iFin]);
 			drawContours(mask, vecContours, iFin, cv::Scalar(1), CV_FILLED, 8);
 
-			//qWarning() << "相机" << (q_ptr->m_calibration_type + 1) << "GPUID= " << citieSegmentationEvaluator[0]->GetDeviceId();
-			//qWarning() << "相机" << (q_ptr->m_calibration_type + 1) << "GPUID= " << citieSegmentationEvaluator[1]->GetDeviceId();
-			//qWarning() << "相机" << (q_ptr->m_calibration_type + 1) << "GPUID= " << citieSegmentationEvaluator[2]->GetDeviceId();
 			//检测缺角
 			if (isNG)
 			{
-				size_t numClass = citieSegmentationEvaluator[1]->GetClassTotalNum();
+				size_t numClass = citieSegmentationEvaluator[0]->GetClassTotalNum();
 				SuaKIT::API::SizeArray minDefectSizes(numClass);
 				for (int i = 0; i < numClass; ++i)
 				{
-					SuaKIT::API::Size curSize1 = { 13, 13 };	// user can choose the min defect size for each class.
+					SuaKIT::API::Size curSize1 = { 8, 8 };	// user can choose the min defect size for each class.
 					SuaKIT::API::Size curSize2 = { 10, 10 };
 					SuaKIT::API::Size curSize3 = { 0, 0 };
 					if (i == 0)
@@ -184,7 +191,14 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				}
 				//SuaKIT::API::Rect roi1(318, 154, 700, 700);
 				SuaKIT::API::ImageData curImg1(bin.data, bin.step, bin.cols, bin.rows, bin.channels(), roi);
-				citieSegmentationEvaluator[1]->Evaluate(curImg1, resultImg1, resultRects1);// , minDefectSizes);
+				status = citieSegmentationEvaluator[0]->Evaluate(curImg1, resultImg1, resultRects1, minDefectSizes);
+				if (status != SuaKIT::API::Status::SUCCESS)
+				{
+					csInfo info;
+					info.status = false;
+					defectList.push_back(info);
+					return;
+				}
 				cv::Mat resultMat1(resultImg1.GetHeight(), resultImg1.GetWidth(), CV_MAKE_TYPE(CV_8U, resultImg1.GetChannel()), resultImg1.GetDataPtr());
 				cv::Mat img = ~resultMat1;
 				if (resultRects1.GetLength() > 0)
@@ -201,6 +215,18 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 					{
 						y = 0;
 					}
+
+					int dentnum = 0;
+
+					for (int jIndex = 0; jIndex < resultRects1.GetLength(); ++jIndex)
+					{
+						SuaKIT::API::Rect temp = resultRects1.GetAt(jIndex);
+						if (temp.classNumber == 0)
+						{
+							dentnum++;
+						}
+					}
+
 					for (int jIndex = 0; jIndex < resultRects1.GetLength(); ++jIndex)
 					{
 						SuaKIT::API::Rect temp = resultRects1.GetAt(jIndex);
@@ -238,11 +264,11 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 								info.huahen = 0;
 								info.zangwu = 0;
 								info.index = imgNum2;
-								if (jIndex >= 1)
+								if (dentnum > 1)
 								{
 									isNG = false;
+									isDent = true;
 									result = ("NG");
-									//cv::rectangle(huahen, defectRect, cv::Scalar(0, 255, 0), 1, 1, 0);
 									defectList.push_back(info);
 								}
 								else
@@ -250,8 +276,8 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 									if (info.value >= losingEdgeArea)
 									{
 										isNG = false;
+										isDent = true;
 										result = ("NG");
-										//cv::rectangle(huahen, defectRect, cv::Scalar(0, 255, 0), 1, 1, 0);
 										defectList.push_back(info);
 									}
 								}
@@ -259,60 +285,68 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 						}     //缺角
 						else   //划痕
 						{
-							std::vector<std::vector<cv::Point>> vecContour;
-							findContours(img.clone(), vecContour, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-							cv::Rect rest2;
-							cv::RotatedRect roRect;
-							std::vector<double> lengths;
-
-							for (int i = 0; i < vecContour.size(); ++i)
+							if (isNG)
 							{
-								rest2 = boundingRect(cv::Mat(vecContour[i]));
-								if (rest2.x > x&&rest2.y > y&& rest2.x < wid + 10 && rest2.y < hei + 10)
-								{
-									roRect = minAreaRect(cv::Mat(vecContour[i]));
-									cv::Point2f pts[4] = { 0 };
-									roRect.points(pts);
-									int x1 = pts[1].x - pts[0].x;
-									int y1 = pts[1].y - pts[0].y;
-									int x2 = pts[3].x - pts[0].x;
-									int y2 = pts[3].y - pts[0].y;
-									double L1 = sqrt(x1*x1 + y1*y1);
-									double L2 = sqrt(x2*x2 + y2*y2);
-									double length = 0;
-									if (L1 < L2)
-									{
-										length = L2*0.01483;
-									}
-									else
-									{
-										length = L1*0.01483;
-									}
-									csInfo info;
-									info.name = csFileName;
-									info.isOK = "NG";
-									info.defectKind = 1;
+								std::vector<std::vector<cv::Point>> vecContour;
+								findContours(img.clone(), vecContour, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+								cv::Rect rest2;
+								cv::RotatedRect roRect;
+								std::vector<double> lengths;
 
-									info.x = rest2.x + roi.x;
-									info.y = rest2.y + roi.y;
-									info.width = rest2.width;
-									info.height = rest2.height;
-									info.value = length;
-									info.huahen = (int)(length*100.0) / 100.0;
-									info.quejiao = 0;
-									info.zangwu = 0;
-									info.index = imgNum2;
-									if (info.value >= scratchLen)
+								for (int i = 0; i < vecContour.size(); ++i)
+								{
+									rest2 = boundingRect(cv::Mat(vecContour[i]));
+									if (rest2.x > x&&rest2.y > y&& rest2.x < wid + 10 && rest2.y < hei + 10)
 									{
-										isNG = false;
-										result = ("NG");
-										//cv::rectangle(huahen, cv::Rect(info.x, info.y, info.width, info.height), cv::Scalar(0, 0, 255), 1, 1, 0);
-										defectList.push_back(info);
+										roRect = minAreaRect(cv::Mat(vecContour[i]));
+										cv::Point2f pts[4] = { 0 };
+										roRect.points(pts);
+										int x1 = pts[1].x - pts[0].x;
+										int y1 = pts[1].y - pts[0].y;
+										int x2 = pts[3].x - pts[0].x;
+										int y2 = pts[3].y - pts[0].y;
+										double L1 = sqrt(x1*x1 + y1*y1);
+										double L2 = sqrt(x2*x2 + y2*y2);
+										double length = 0;
+										if (L1 < L2)
+										{
+											length = L2*0.01483;
+										}
+										else
+										{
+											length = L1*0.01483;
+										}
+										csInfo info;
+										info.name = csFileName;
+										info.isOK = "NG";
+										info.defectKind = 1;
+
+										info.x = rest2.x + roi.x;
+										info.y = rest2.y + roi.y;
+										info.width = rest2.width;
+										info.height = rest2.height;
+										info.value = length;
+										info.huahen = (int)(length*100.0) / 100.0;
+										info.quejiao = 0;
+										info.zangwu = 0;
+										info.index = imgNum2;
+										if (info.value >= scratchLen)
+										{
+											isNG = false;
+											isHuahen = true;
+											result = ("NG");
+											defectList.push_back(info);
+										}
 									}
 								}
 							}
 						}
 					}
+				}
+				if (isDent || isHuahen)
+				{
+					LOGI("imgNum(0): {}", imgNum2);
+					cv::imwrite("D:\\Camera1\\" + csFileName + "_NG.bmp", srcImg);
 				}
 			}
 
@@ -320,18 +354,25 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 			if (isNG)
 			{
 				SuaKIT::API::ImageData curImg(bin.data, bin.step, bin.cols, bin.rows, bin.channels(), roi);
-				size_t numClass2 = citieSegmentationEvaluator[2]->GetClassTotalNum();
+				size_t numClass2 = citieSegmentationEvaluator[1]->GetClassTotalNum();
 				SuaKIT::API::SizeArray minDefectSizes2(numClass2);
 				for (int i = 0; i < numClass2; ++i)
 				{
-					SuaKIT::API::Size curSize1 = { 4, 4 };	// user can choose the min defect size for each class.
+					SuaKIT::API::Size curSize1 = { 7, 7 };	// user can choose the min defect size for each class.
 					SuaKIT::API::Size curSize2 = { 0, 0 };
 					if (i == 0)
 						minDefectSizes2.SetAt(i, curSize1);
 					else
 						minDefectSizes2.SetAt(i, curSize2);
 				}
-				citieSegmentationEvaluator[2]->Evaluate(curImg, resultImg, resultRects, minDefectSizes2);
+				status = citieSegmentationEvaluator[1]->Evaluate(curImg, resultImg, resultRects, minDefectSizes2);
+				if (status != SuaKIT::API::Status::SUCCESS)
+				{
+					csInfo info;
+					info.status = false;
+					defectList.push_back(info);
+					return;
+				}
 				cv::Mat resultMat(resultImg.GetHeight(), resultImg.GetWidth(), CV_MAKE_TYPE(CV_8U, resultImg.GetChannel()), resultImg.GetDataPtr());
 				if (resultRects.GetLength() != 0)
 				{
@@ -371,15 +412,6 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 								temp = srcImg.mul(masks);
 								defectImg.push_back(temp.clone());
 								drawContours(mask, vecContour, i, cv::Scalar(0), CV_FILLED, 8);
-								//for (int i = rest2.x; i < rest2.x + rest2.width; i++)
-								//{
-								//	for (int j = rest2.y; j < rest2.y + rest2.height; j++)
-								//	{
-								//		if (img.at<uchar>(j, i) != 0)
-								//			counts++;
-								//	}
-								//}
-
 								defectPointTemp.push_back(rest2);
 							}
 						}
@@ -454,12 +486,18 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 						if (info.value >= dirtyThresh || radio >= dirtyArea)
 						{
 							isNG = false;
+							isZangwu = true;
 							result = "NG";
 							//cv::rectangle(huahen, cv::Rect(info.x, info.y, info.width, info.height), cv::Scalar(255, 0, 0), 1, 1, 0);
 							defectList.push_back(info);
 						}
 					}
 					//}
+				}
+				if (isZangwu)
+				{
+					LOGI("imgNum(1): {}", imgNum2);
+					cv::imwrite("D:\\Camera1\\" + csFileName + "_NG.bmp", srcImg);
 				}
 			}
 			if (isNG)
@@ -470,18 +508,12 @@ void QvdSUALPrivate::ProcessImage(cv::Mat img, std::vector<csInfo>& defectList, 
 				info.index = imgNum2;
 				result = ("OK");
 				defectList.push_back(info);
+				LOGI("imgNum(2):{}", imgNum2);
+				LOGI("defectkind: {}", info.defectKind);
+				cv::imwrite("D:\\Camera1\\" + csFileName + "_OK.bmp", srcImg);
 			}
-
-			//csInfo info;
-			//info.name = csFileName;
-			//info.isOK = result;
-			//srcImg.copyTo(rstImg);
 		}
 	}
-	//catch (exception e){
-	//	qWarning() << "GPU error.";
-	//	return;
-	//}
 }
 
 BOOL QvdSUALPrivate::SaveStatisticsExcel(string fileName, string type, double quejiao, double huahen, double zangwu, int i, int total, int index)
@@ -620,12 +652,9 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 	bool portFlag3 = false;
 	resultOutport = -1;
 
-	ofstream data;
-	QDir logDir("./log/");
-	if (!logDir.exists())
-		logDir.mkdir("./log/");
-	data.open("./log/data.log", std::ios::app);
-	//data << index2 << ":" << "\n";
+	//auto file_logger = spd::basic_logger_mt("basic_logger", "./log/SUAL/vdSUAL.log");
+	//spd::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
+	//spd::set_default_logger(file_logger);
 	try
 	{
 		resultOutport = -1;
@@ -673,28 +702,24 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 
 				if ((*i).defectKind == 0){
 					portFlag1 = true;
-					type = QvdSUAL::tr("diaojiao");
-					//data << "缺陷类型：" << "diaojiao" << "\n";
+					type = QvdSUAL::tr("diaojiao");				
 				}
 
 				if ((*i).defectKind == 1){
 					portFlag2 = true;
 					type = QvdSUAL::tr("huahen");
-					//data << "缺陷类型：" << "huahen" << "\n";
 				}
 				if ((*i).defectKind == 2){
 					portFlag3 = true;
 					type = QvdSUAL::tr("zangwu");
-					//data << "缺陷类型：" << "zangwu" << "\n";
 				}
-				//if ((*i).defectKind == 3){
-				//	type = QvdSUAL::tr("yiwu");
-				//	resultStr = QvdSUAL::tr("VAGUE");
-				//	_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
-				//	resultStatus = QMVToolPlugin::VAGUE;
-				//	return;
-				//	//data << "缺陷类型：" << "zangwu" << "\n";
-				//}
+				if ((*i).status == false){
+					type = QvdSUAL::tr("detect failed");
+					resultStr = QvdSUAL::tr("VAGUE");
+					_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
+					resultStatus = QMVToolPlugin::VAGUE;
+					return;
+				}
 			}
 		}
 
@@ -710,12 +735,9 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 
 		//生成数据表格
 		UpdateNumberOfDefect(&result);
-		//data << "设置的剔除口:" << "缺角:" << q_ptr->m_edgePort << "," << "划痕:" << q_ptr->m_scratchPort << "脏污：" << q_ptr->m_mudgePort << "\n";
-		//data << "最终剔除口(相机1)：" << (resultOutport + 1) << "\n";
-		data << "结果状态：" << flagResult << "\n";
+		LOGI("flagResult:{}", flagResult);
 
 		if (!flagResult){
-			//imgPath = imgPath + "_NG" + ".bmp";
 			if (portFlag1)
 			  cv::imwrite(NG0FolderName + timestamp.toStdString() + "_NG0"+ ".bmp", srcImg);
 			if (!portFlag1 && (portFlag2 || portFlag3))
@@ -726,23 +748,18 @@ void QvdSUALPrivate::run(const Halcon::HImage& image, const Halcon::HRegion& roi
 			_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
 		}
 		else{
-			//imgPath = imgPath + "_OK" + ".bmp";
 			cv::imwrite(OKFolderName + timestamp.toStdString() + "_OK" + ".bmp", srcImg);
 			_paint.setPen(Qt::green);
 			resultStatus = QMVToolPlugin::OK;
 			resultStr = QvdSUAL::tr("OK");
 			_paint.drawText(image.Height() / 20, image.Height() / 20 + (fontsize*1.5*textLine++), resultStr);
 		}
-		if (data.is_open())
-		  data.close();
 		return;
 	}
 	catch (const Halcon::HException& e){
 		_paint.setPen(Qt::yellow);
 		resultStatus = QMVToolPlugin::VAGUE;
 		qWarning() << "vdSUAL.dll:" << e.message;
-		if (data.is_open())
-		  data.close();
 		return;
 	}
 }

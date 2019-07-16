@@ -6,7 +6,7 @@
 #include "vdSUAL_p.h"
 #include "../include/qmvtoolplugin.h"
 ///////////////////////////////////////////////////////////////////////////////
-#define COLOR_CLASSIFICATION_MAX_MODEL_NUM 3
+#define COLOR_CLASSIFICATION_MAX_MODEL_NUM 2
 
 struct QDictItem {
 	QString name = "";
