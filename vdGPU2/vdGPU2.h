@@ -6,7 +6,7 @@
 #include "vdGPU2_p.h"
 #include "../include/qmvtoolplugin.h"
 ///////////////////////////////////////////////////////////////////////////////
-#define COLOR_CLASSIFICATION_MAX_MODEL_NUM 2
+#define COLOR_CLASSIFICATION_MAX_MODEL_NUM 3
 
 struct QDictItem {
 	QString name = "";
